@@ -7,4 +7,6 @@ urlpatterns = [
     path('logout/', views.Logout.as_view(), name='logout'),
     path('whoami/', views.WhoAmI.as_view()),
     path('protected/', views.ExampleProtectedView.as_view(), name='protected_view'),
+
+    path('login-test/', views.Login2.as_view()),
 ]
