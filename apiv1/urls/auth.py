@@ -1,12 +1,10 @@
 from django.urls import path
 from apiv1.views import auth as views
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
-    path('login/', views.Login.as_view(), name='login'),
+    path('token/obtain/', views.TokenObtainPairView.as_view(), name='token_obtain'),
     path('token/refresh/', views.TokenRefreshView.as_view(), name='token_refresh'),
-    path('logout/', views.Logout.as_view(), name='logout'),
-    path('whoami/', views.WhoAmI.as_view()),
-    path('protected/', views.ExampleProtectedView.as_view(), name='protected_view'),
-
-    path('login-test/', views.Login2.as_view()),
+    path('token/destroy/', views.TokenDestroyView.as_view(), name='token_destroy'),
+    path('whoami/', views.WhoAmI.as_view(), name='whoami'),
 ]

@@ -1,44 +1,53 @@
-import time
-
 from django.conf import settings
-from django.views.generic import TemplateView
+from django.forms import model_to_dict
+from rest_framework import status as http_status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt import tokens
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView as DRFTokenObtainPariView, TokenRefreshView as DRFTokenRefreshView
+    TokenObtainPairView as DRFTokenObtainPairView, TokenRefreshView as DRFTokenRefreshView
 )
 
 
-class Login(DRFTokenObtainPariView):
+def _token_cookie_kwargs():
+    return {
+        'expires': settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"],
+        'secure': settings.SIMPLE_JWT["AUTH_COOKIE_SECURE"],
+        'httponly': settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+        'samesite': settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
+        'domain': settings.SIMPLE_JWT["AUTH_COOKIE_DOMAIN"],
+        'path': settings.SIMPLE_JWT["AUTH_COOKIE_PATH"]
+    }
+
+
+class TokenObtainPairView(DRFTokenObtainPairView):
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        access_token = response.data["access"]
+        serializer = self.get_serializer(data=request.data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            raise InvalidToken(e.args[0])
+
+        data = serializer.validated_data
+        data['user'] = model_to_dict(
+            instance=serializer.user,
+            fields=['id', 'username']
+        )
+        response = Response(data, status=http_status.HTTP_200_OK)
         response.set_cookie(
-            key=settings.SIMPLE_JWT["AUTH_COOKIE"],
-            value=access_token,
-            expires=settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"],
-            secure=settings.SIMPLE_JWT["AUTH_COOKIE_SECURE"],
-            httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
-            samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
-            domain=settings.SIMPLE_JWT["AUTH_COOKIE_DOMAIN"],
-            path=settings.SIMPLE_JWT["AUTH_COOKIE_PATH"]
+            settings.SIMPLE_JWT['AUTH_COOKIE_ACCESS'],
+            data['access'],
+            **_token_cookie_kwargs()
         )
         response.set_cookie(
-            'test',
-            'aaa',
-            httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
-            secure=settings.SIMPLE_JWT["AUTH_COOKIE_SECURE"],
-            samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
-            expires=settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"]
+            settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+            data['refresh'],
+            **_token_cookie_kwargs()
         )
-        print(response.cookies)
         return response
-
-
-class Login2(TemplateView):
-    template_name = 'login_test.html'
 
 
 class TokenRefreshView(DRFTokenRefreshView):
@@ -46,43 +55,42 @@ class TokenRefreshView(DRFTokenRefreshView):
         response = super().post(request, *args, **kwargs)
         if 'access' in response.data:
             access_token = response.data['access']
-
-            # 更新令牌时，同时更新 HTTP Only Cookies 中的令牌
-            # response.set_cookie(key='access_token', value=access_token, httponly=True)
-
+            response.set_cookie(
+                key=settings.SIMPLE_JWT["AUTH_COOKIE"],
+                value=access_token,
+                **_token_cookie_kwargs()
+            )
         return response
 
 
-class Logout(APIView):
+class TokenDestroyView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def delete(self, request):
-        refresh_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
-        token = tokens.RefreshToken(refresh_token)
-        token.blacklist()
+    @staticmethod
+    def delete(request):
+        # refresh_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
+        # token = tokens.RefreshToken(refresh_token)
+        # token.blacklist()
 
-        response = Response()
-        response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_ACCESS'])
-        response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
-        response.delete_cookie('X-CSRFToken')
+        response = Response(status=http_status.HTTP_204_NO_CONTENT)
+        response.delete_cookie(
+            settings.SIMPLE_JWT['AUTH_COOKIE_ACCESS'],
+            samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
+        )
+        response.delete_cookie(
+            settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+            samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE']
+        )
         return response
 
 
 class WhoAmI(APIView):
     permission_classes = []
 
-    def get(self, request):
-        print('whoami',request.COOKIES)
-        return Response({
-            'user': {
-                'id': request.user.id,
-                'username': request.user.username
-            }
-        })
-
-
-class ExampleProtectedView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        return Response({"message": "This is a protected view"})
+    @staticmethod
+    def get(request):
+        data = {
+            'id': request.user.id,
+            'username': request.user.username
+        }
+        return Response(data)
