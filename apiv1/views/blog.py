@@ -1,10 +1,17 @@
-from rest_framework import viewsets
+from rest_framework import generics
 
-from apiv1.serializers.blog import ArticleSerializer
+from apiv1.serializers.blog import ArticleSerializer, ArticleCreateUpdateSerializer
+from common.views.mixins import CreateMixin, UpdateMixin
 from main.models.blog import Article
 
 
-class ArticleViewSet(viewsets.ModelViewSet):
+class ListCreateArticleView(CreateMixin, generics.ListCreateAPIView):
     queryset = Article.objects.all()
+    create_serializer_class = ArticleCreateUpdateSerializer
     serializer_class = ArticleSerializer
-    permission_classes = []
+
+
+class RetrieveUpdateDestroyArticleView(UpdateMixin, generics.RetrieveUpdateDestroyAPIView):
+    queryset = Article.objects.all()
+    create_serializer_class = ArticleCreateUpdateSerializer
+    serializer_class = ArticleSerializer

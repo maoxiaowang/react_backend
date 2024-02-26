@@ -47,7 +47,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    # 'main.middleware.AllowCredentialsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -62,7 +61,6 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
 ]
-CSRF_COOKIE_SAMESITE = None
 SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = "Strict"
 
@@ -129,15 +127,15 @@ REST_FRAMEWORK = {
         'common.authentication.CustomJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated'
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ],
     # 'DEFAULT_FILTER_BACKENDS': (
     #     'django_filters.rest_framework.DjangoFilterBackend',
     # ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     # 'EXCEPTION_HANDLER': 'common.exceptions.handlers.exception_handler',
-    # 'DEFAULT_PAGINATION_CLASS': 'common.core.paginator.PageNumberPagination',
-    # 'PAGE_SIZE': 10,
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
 }
 
 SIMPLE_JWT = {
