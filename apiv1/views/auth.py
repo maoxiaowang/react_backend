@@ -1,14 +1,16 @@
 from django.conf import settings
 from django.forms import model_to_dict
 from rest_framework import status as http_status
+from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt import tokens
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework_simplejwt.views import (
     TokenObtainPairView as DRFTokenObtainPairView, TokenRefreshView as DRFTokenRefreshView
 )
+
+from apiv1.serializers.auth import RegisterSerializer
 
 
 def _token_cookie_kwargs():
@@ -94,3 +96,8 @@ class WhoAmI(APIView):
             'username': request.user.username
         }
         return Response(data)
+
+
+class RegisterView(CreateAPIView):
+    permission_classes = []
+    serializer_class = RegisterSerializer
