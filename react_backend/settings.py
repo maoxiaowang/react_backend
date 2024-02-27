@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'sslserver',
     'rest_framework',
-    'rest_framework_simplejwt.token_blacklist',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -61,11 +60,9 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
 ]
-SESSION_COOKIE_SECURE = True
-SESSION_COOKIE_SAMESITE = "Strict"
 
 CORS_ALLOW_CREDENTIALS = True
-# CORS_ALLOW_PRIVATE_NETWORK = True
+
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
 ]
@@ -98,6 +95,7 @@ WSGI_APPLICATION = 'react_backend.wsgi.application'
 
 DATABASES = {
     'default': {
+        'ATOMIC_REQUESTS': True,
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
@@ -133,7 +131,6 @@ REST_FRAMEWORK = {
     #     'django_filters.rest_framework.DjangoFilterBackend',
     # ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
-    # 'EXCEPTION_HANDLER': 'common.exceptions.handlers.exception_handler',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
 }

@@ -1,0 +1,6 @@
+auth:
+  # Auth
+  - add_user
+  - view_user
+  - change_user
+  - delete_user

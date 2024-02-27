@@ -1,6 +1,9 @@
 from django.contrib.auth import password_validation, get_user_model
+from django.contrib.auth.models import Group
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
+
+from apiv1.serializers import UserSerializer
 
 User = get_user_model()
 
@@ -40,4 +43,13 @@ class RegisterSerializer(serializers.Serializer):
         username = validated_data.get('username')
         password = validated_data.get('password2')
         user = User.objects.create_user(username, password=password)
+        try:
+            group = Group.objects.get(id=2, name='user')
+        except Group.DoesNotExist:
+            pass
+        else:
+            user.groups.add(group)
         return user
+
+    def to_representation(self, instance):
+        return UserSerializer(instance).data
